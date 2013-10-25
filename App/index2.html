@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Signus Vitalis | Chuvaness Hospital </title>
+
+	<link rel='stylesheet' href='css/bootstrap.css' type='text/css' />
+	<style>
+	body {
+		/* background-image: url(img/bg.png); */
+		background-color:#45aeea;
+		font-family:Trebuchet MS;
+	}
+
+	h1, h4 {font-weight:normal; color:#45aeea; color:white;}
+
+	h2, h1 { font-weight:normal; color:#45aeea; font-family:"Rockwell";}
+
+	/* Styles on the clickable faggot */
+	.activity-item {
+		margin:0px; margin-bottom:8px; border:none;
+		background-color:#69b6e2; color:white; /* #69b6e2 #45aeea */ 
+
+		text-shadow: none; /* 0px 1px 1px #444; */
+		box-shadow: 1px 1px 5px #ccc;
+	}
+
+	.activity-item:hover{
+		box-shadow: 1px 1px 10px #aaa;
+		background-color:#666;
+	}
+
+	#activity-container {
+		border-top:1px dotted #ccc;
+		padding-top:10px;
+	}
+
+	/* Stahhhp */
+
+	#main-manu-holder {
+		border-radius: 10px; height:400px;
+	}
+
+	/* Welcome guys */
+	#welcome-pane h1, h4 { color:white; }
+	#welcome-pane h1 { text-shadow: 0px 0px 4px #111; }
+	#welcome-pane h4 { text-shadow: 0px 0px 3px #111; }
+
+	#welcome-pane #loading-status-container{
+		color:white; text-shadow:none;
+		margin-top:13%;
+	}
+
+	</style>
+
+
+	<script type='text/javascript' src='js/jquery.js'></script>
+	<script type='text/javascript' src='js/jquery-ui-1.10.2.custom.js'></script>
+	<script type='text/javascript' src='js/bootstrap.js'></script>
+	<link rel="stylesheet" type="text/css" href="graph/jquery.jqplot.css" />
+	<script language="javascript" type="text/javascript" src="graph/jquery.jqplot.min.js"></script>
+	<script type="text/javascript" src="graph/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script type="text/javascript" src="graph/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+
+
+	<script>
+	var _graph;
+	$(function(){
+		$('#main-container-pane').hide(0);
+
+
+		var graph = $.jqplot('chartdiv',  [[[0, 0],[3,0],[5,0],[10,0],[15,0],[20,0]]], 
+			{ title:'Statistics Chuva', animate:true, animateReplot:true,
+				series:[{color:'#5FAB78'}],
+				axes:{
+					yaxis:{min:0,max:20},xaxis:{min:0,max:20}
+				}
+		});
+
+		_graph = graph;
+
+
+		$('#profile').hide(0);
+
+		$('.activity-item').click(function(){
+			$('#feed').hide('slide', {"direction":"left"}, 500, function(){
+				var val = [[0, 5],[3,12],[5,10],[10,5],[15,8],[20,10]]
+				$('#profile').show('slide', {"direction":"right"}, 500);
+
+				//Delay ta ug one second for drawing... for now...
+				setTimeout(function(){
+					graph.series[0].data = val;
+					graph.replot();
+				}, 1500);
+			});
+		});
+
+		$('#back-to-activity-feed').click(function(){
+			$('#profile').hide('slide', {"direction":"right"}, 500, function(){
+				$('#feed').show('slide', {"direction":"left"}, 500);
+			});
+		});
+
+		var status = $('#loading-status');
+		//Execute Welcome Animation... :)
+		setTimeout(function(){
+			status.html('Emulating capture for data persistence...');
+			setTimeout(function(){
+				status.html('Loading application...');
+				setTimeout(function(){
+					$('body').animate({backgroundColor:"#fff"}, 800);
+					$('#welcome-pane').hide('fade', 800, function(){
+						$('body').css('background-image', 'url(img/bg.png)');
+
+						$('#main-container-pane').show('fade', 800);
+					});
+				}, 500);
+			}, 800);
+		}, 1000);
+		
+	});
+	</script>
+
+</head>
+<body>
+	<!-- Welcome Animation -->
+	<div class='container' id='welcome-pane'>
+		<div align='center'>
+			<br><br><br><br><br><br>
+			<h1>Signus Vitalis Chuvaness</h1>
+			<h4>A Vital Signs Registry System</h4>
+
+			<div id='loading-status-container'>
+				<img src='img/load1.gif' /><br><br>
+				<div id='loading-status'>
+					Emulating client authentication...
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id='main-container-pane' class='container'>
+		<div class='row'>
+			<div class="navbar navbar-fixed-top">
+      			<div class="navbar-inner">
+        			<div class="container">
+			          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+			            <span class="icon-bar"></span>
+			            <span class="icon-bar"></span>
+			            <span class="icon-bar"></span>
+			          </button>
+          			  <a class="brand" href="#" style='font-family:"Rockwell"'>
+          			  	Signus Vitalis
+          			  </a>
+          			  <div class="nav-collapse">
+          <ul class="nav">
+     <!--       <li class="active"><a href="#">Dashboard</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Help</a></li> -->
+            <li>
+            	<div class='navbar-search pull-left'>
+            		<input type="text" class="search-query span3" placeholder="Search for Patient Name">
+            	</div>
+            </li>
+          </ul>
+
+          <ul class="nav pull-right">	
+            <li class='dropdown'>
+            	<a href="#" class='dropdown-toggle' data-toggle='dropdown'>
+            		<span class="badge badge-info">1</span> <i class='icon-comment icon-white'></i>
+            	</a>
+            	<ul class='dropdown-menu'>
+            		<li><a href='#'> Activity Feed </a></li>
+            		<li><a href='#'> chuvaness </a></li>
+            		<li><a href='#'> chuvaness </a></li>
+            		<li><a href='#'> chuvaness </a></li>
+            		<li class="divider"></li>
+                	<li><a href="#">See All Notifications</a></li>
+            	</ul>
+            </li>
+            <li class="divider-vertical"></li>
+<!--
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+              </ul>
+            </li>
+-->
+			<li class='active'>
+		<!--		<form class="navbar-search pull-left" action=""> -->
+				<div class='navbar-search pull-left' style='color:white;margin-top:15%;'>
+            		Nurse's Station 1
+            	</div>
+         <!-- 		</form> -->
+          	</li>
+          	 <li class="divider-vertical"></li>
+          </ul>
+        </div>
+			          
+        			</div>
+      			</div>
+    		</div>
+		</div>
+		<div id='dashboard' class='row' style='margin-top:10%'>
+			<div id='feed' class='span12'>
+				<h2 style='color:#888'>Activity Feed</h2>
+				<div id='activity-container' style='color:white;margin-top:2%'>
+					<div class='activity-item alert' >
+						<i class="icon-white icon-edit"></i>
+						Bandiola, Kieth Mark has recorded Dimaporo, Novo's vital signs on 08:01:03 09/12/2010
+					</div>
+					<div class='activity-item alert' >
+						<i class="icon-white icon-edit"></i>
+						Aguilar, Arven Jade recorded  Dimaporo, Novo's vital signs. 08:01:03 09/12/2010
+					</div>
+					<div class='activity-item alert' >
+						<i class="icon-white icon-edit"></i>
+						Aguilar, Arven Jade recorded  Dimaporo, Novo's vital signs. 08:01:03 09/12/2010
+					</div>
+					<div class='activity-item alert' >
+						<i class="icon-white icon-edit"></i>
+						Aguilar, Arven Jade recorded  Dimaporo, Novo's vital signs. 08:01:03 09/12/2010
+					</div>
+				</div>
+			</div>
+			<div id='profile' class='span12'>
+				<h2 style='color:#888'>Patient Profile</h2>
+				<div class='row'>
+					<div name='patient-info' class='span4'>
+						<table class='table' style='width:100%'>
+							<tr>
+								<td>Name</td>
+								<td>Bandiola, Kieth Mark S.</td>
+							</tr>
+							<tr>
+								<td>Age</td><td>12</td>
+							</tr>
+							<tr>
+								<td>Room #</td><td>12</td>
+							</tr>
+							<tr>
+								<td>Diagnosis</td><td>Chuvaness with the chuva ek.</td>
+							</tr>
+						</table>
+						<button  class='btn btn-primary span4' style='margin-bottom:10px'>
+							<i class='icon-print icon-white'></i> Print Report</button>
+						<button id='back-to-activity-feed' class='btn btn-inverse span4'>
+							<i class='icon-chevron-left icon-white'></i> Back to Activity Feed</button>
+					</div>
+					<div name='graph-info' class='span8'>
+						<div id="chartdiv" style="height:300px;width:600px;"></div>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+		
+	</div>
+
+	<!-- Popup Dialogs -->
+	<div>
+		
+
+	</div>
+
+</body>
+</html>

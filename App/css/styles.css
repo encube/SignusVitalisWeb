@@ -1,0 +1,76 @@
+	html {
+		/* background:url(img/bg-welcome.PNG) no-repeat center center fixed; */
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+	}
+
+	body { background:transparent; font-family:"Roboto"; }
+
+	/* Welcome Pane Container */
+	#welcome-pane-container {
+		padding-top:5%; font-family:"Roboto-Light"; font-weight: normal; color:#555;
+	} #welcome-pane-container h1, h2, h3, h4, h5, h6{ color:white; font-weight:normal;  }
+	#welcome-pane-container h1, h2 { 
+		font-size:250%; /* text-shadow:0px -1px 2px #444; */
+		font-family:"Roboto-Light"; font-weight: normal; color:#555;
+	} #welcome-pane-container h4 { font-size:120%; color:#555; }
+	#welcome-pane-status { margin-top:10%;}
+
+
+	/* Application Sytling */
+	#application-pane-container { font-family:"Roboto-Regular";  }
+	#app-container { margin-top:4%;  }
+
+	#app-header h1{ font-family:"Roboto-Light"; font-weight: normal; color:#555;}
+	#app-header h4{ font-family:"Roboto-Light"; font-weight: normal; color:#555;}
+
+	#main-menu { 
+		margin-top: 1%; font-family:"Roboto-Regular";
+		margin-left:-3%;  width:95%;
+	}
+	#main-menu ul{ list-style: none;  padding-left:0px; } /* background-color:#eee; */
+	#main-menu ul li{ 
+		float:left; width:20%; padding:10px 15px 10px 15px;
+		border-left: 1px #ccc solid; margin-right:1%;
+	}
+	#main-menu ul li:hover { background-color:#ddd; color:#555;  }
+
+	#main-menu .active { background-color:#45aeea; color:white; } 
+	
+/* Add-on CSS styling */
+button {
+		background-color:#45aeea; border:none; color:white; padding:10px 18px 10px 18px;
+	} button:hover { background-color:white; color:#45aeea; border: 1px #45aeea solid; }
+
+	.alternate { color:#45aeea; background-color:white; border: 1px #45aeea solid; }
+	.alternate:hover { border:none; }
+
+	#patient-name-table {
+		overflow-y:auto; height:240px; margin-top:-20px; 
+		width:95%;
+	}
+
+	h3{
+ 		font-family:"Roboto-Light"; font-weight: normal; color:#555;
+ 		margin-left:-2%; margin-bottom:-3%; padding:0; margin-top:4%
+	}
+
+/* Notification panel chuchu */
+#notification-form { font-family:"Roboto-Light"; }
+#notification-form .notification-container-item {
+	border: 1px #ddd solid; padding: 10px; margin:10px 0px 10px 0px;
+}
+#notification-form .notification-container-item:hover {
+	background-color: #45aeea; color:white;
+}
+#notification-form .notification-container-item  .notification-container-item-date{
+	float:right; font-size:70%; margin-top:-1%;
+}
+
+#notification-form .unread-notification{ border: 1px #45aeea solid; font-weight:bold; }
+
+
+
+

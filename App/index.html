@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title id='application-title'> Loading Application </title>
+
+	<link rel='stylesheet' href='css/bootstrap.css' type='text/css' />
+	<script type='text/javascript' src='js/jquery.js'></script>
+	<script type='text/javascript' src='js/jquery-ui-1.10.2.custom.js'></script>
+	<script type='text/javascript' src='js/bootstrap.js'></script>
+	
+	<script src="graph/js/highcharts.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="css/jquery.jscrollpane.css" />
+	<link rel="stylesheet" type="text/css" href="css/flick/jqueryui.css" />
+	<script type='text/javascript' src='js/jquery.mousewheel.js'></script>
+	<script type='text/javascript' src='js/mwheelIntent.js'></script>
+	<script type='text/javascript' src='js/jquery.jscrollpane.min.js'></script>
+
+	<link rel='stylesheet' type='text/css' href='css/fonts.css' />
+	<link rel='stylesheet' type='text/css' href='css/styles.css' />
+
+<!-- 	<script type='text/javascript' src='js/backend.js'></script> -->
+<!-- 	<script type='text/javascript' src='js/startup.js'></script> -->
+
+	<script>
+	var _appHandler = {
+	
+		serverLocation: function(){
+			//var loc = window.location.host; loc.split("/");
+			return "http://"+window.location.host+"/vsrs/server/";
+		},
+		changeLocation: function(loc){
+			return this.serverLocation()+loc;
+		},
+
+		show_error_message: function(type, msg){
+			if (type == 404){
+				alert("Server Error. Page not found.");
+			}
+		}
+	};
+	
+	var _notificationHandler = {
+		button: null, //Notification Button
+		modal: null, //Modal Alert Box
+		recentCount: null,
+		
+		__init__: function(){
+			sessionStorage.setItem('VSRSnotifCount', 0); //Initial Value for notification...
+		},
+		
+		getNotification: function(){
+			//Get notification count on the server...
+			
+			var countReq = $.ajax({ url:_appHandler.changeLocation('notification.php?count') });
+			countReq.done(function(data){
+				var curCount = sessionStorage.getItem('VSRSnotifCount');
+				if (data != curCount){
+					
+				}
+			}); countReq.fail(function(){ });
+		}, 
+		minusOne: function(){
+			var val = sessionStorage.getItem('VSRSnotifCount');
+			if (val != 0){ val -= 1; } sessionStorage.setItem('VSRSnotifCount', val);
+			
+			var b = this.button; 
+			if (val != 0){ b.html("("+val+")"); } else { b.html(""); }
+			
+		}
+	};
+	
+	var _feedHandler = {
+		// Uses SESSION_STORAGE functionality of HTML5
+		// Stores on key: VSRSfeedCount
+	
+		container: null, isLive: false, feed: null,
+		vitals_container:null, cases_container:null,
+		
+		__init__: function(){
+			this.getFeedCountFromServer();
+		},
+		setFeedContainer: function(cont){
+			this.container = cont;
+		},
+		currentCount: function(){ return sessionStorage.getItem('VSRSfeedCount'); },
+		getFeedCountFromServer: function(){
+			var feed = $.ajax({url:_appHandler.changeLocation('feed.php?w&count')});
+			feed.done(function(data){
+				sessionStorage.setItem('VSRSfeedCount', data);
+			});
+		},
+		ifHasNewFeed: function(){
+			var current = this.currentCount(); 
+			this.getFeedCountFromServer();
+			var onServer = this.currentCount();		
+		
+			//count = this.getFeedCountFromServer()
+			if (onServer == current){
+				return false;
+			} else { alert(); return true; }
+		},
+		updateFeedAnimate: function(){
+			var cont = this.container; var parent = this;
+			
+			var ctr = $.ajax({ url:_appHandler.changeLocation('feed.php?w&count') });
+			ctr.done(function(data){
+				var current = parent.currentCount();
+				
+				if (current != data){
+					sessionStorage.setItem('VSRSfeedCount', data);
+					
+					var newFeed = $.ajax({ url:_appHandler.changeLocation('feed.php?w&feed'), 
+						data:{ p:current, c:data }
+					});
+					newFeed.done(function(data){
+						cont.prepend(data); var initValue = 500;
+						
+						//Find every child in there na naay ing.ato...
+						var children = cont.children('.new-item-feed');
+						children.each(function(){	
+							$(this).hide(0); $(this).show('fade', 500);
+							$(this).removeClass('new-item-feed');
+							
+							$(this).animate({'border-color':'#ddd'}, 3000);
+						});
+					});
+				}
+			});
+		},
+		
+		update_cases_registered: function(){
+			var c = this.cases_container; 
+			var newFeed = $.ajax({ url:_appHandler.changeLocation('feed.php?w&count&cases') });
+			newFeed.done(function(data){
+				c.html(data);
+			});
+		},
+		update_vitals_submitted: function(){
+			var c = this.vitals_container; 
+			var newFeed = $.ajax({ url:_appHandler.changeLocation('feed.php?w&count&vitals') });
+			newFeed.done(function(data){
+				c.html(data);
+			});
+		},
+		
+		startLiveFeed: function(){
+			this.isLive = true; var kini = this;
+			this.feed = setInterval(function(){
+				kini.doLiveFeed();
+			}, 1000);
+		},
+		stopLiveFeed: function(){
+			this.isLive = false;
+			clearInterval(this.feed);
+		},
+		doLiveFeed: function(){
+			if (this.isLive){
+				this.updateFeedAnimate();
+				this.update_cases_registered();
+				this.update_vitals_submitted();
+			}
+		}
+	
+	};
+
+	$(function(){
+
+		$('#main-menu li').click(function(){
+			//Find id that has active... :)
+
+			//Get the id for the menu handling...
+			var id = $(this).attr('id'), classs = $(this).attr('class');
+			if (classs != "active"){
+
+				var location = "pages/";
+				switch(id){
+					case "patient":
+						location += "patients.php"; break;
+					case "personnel":
+						location += "personnel.php"; break;
+					case "dashboard":
+						location += "dashboard.php"; break;
+					case "settings":
+						location += "about.php"; break;
+				}
+				
+				// Stopper for dashboard feed... :)
+				if (id != "dashboard"){
+					_feedHandler.stopLiveFeed();
+				}
+
+				//Find the li that is active
+				var activeObject = null;
+				$('#main-menu li').each(function(){
+					var isactive = $(this).attr('class');
+					if (isactive == "active"){
+						$(this).removeClass('active');
+					}
+				});
+
+				//alert($(this).attr('id'));
+				$(this).addClass('active');
+
+				//alert(_appHandler.changeLocation(location));
+				$('#container').hide('slide', {"direction":"left"}, 500, function(){
+					var pageReq = $.ajax({ url:_appHandler.changeLocation(location) });
+					pageReq.done(function(data){
+						//alert(data);
+						$('#container').html(data).show('slide', {"direction":"left"}, 500);
+					}); pageReq.fail(function(){ _appHandler.show_error_message(404, ""); });
+				});
+				
+
+			}
+		});
+/*
+		//DO the initial state... :P
+		
+		
+*/
+		$('#application-pane-container').hide(0);
+		var welcome = $('#welcome-pane-status');
+
+		//Update Hospital Name... //Fetching Hospital Info...
+		welcome.html("Connecting to server...");
+		var hospital = $.ajax({ url:_appHandler.changeLocation('hospital.php') });
+		hospital.done(function(data){
+			welcome.html("Fetching hospital information...");
+			$('#app-header h4').html(data); $('#welcome-pane-container h4').html(data); 
+			welcome.html("Checking client authentication...");
+			
+			var auth = $.ajax({ url:_appHandler.changeLocation('session.php?w') });
+			auth.done(function(data){
+				var result = JSON && JSON.parse(data) || $.parseJSON(data);
+				if (result.wardID == ""){
+					var h = "Checking client authentication... Failed.<br>Please contact your system administrator. Either you are accessing a machine that is not registered with the system.";
+					welcome.html(h);
+				} else {
+					welcome.html("Getting ward data from server...");
+					var initReq = $.ajax({ url:_appHandler.changeLocation('pages/dashboard.php') });
+					initReq.done(function(data){
+						$('#container').html(data); //
+						welcome.html("Loading application...");
+						$('#welcome-pane-container').hide('fade', 500, function(){
+							$('#application-title').html("Signus Vitalis: A Vital Signs Information System");
+							$('#application-pane-container').show('fade', 500, function(){
+								$('#container').show('slide', {"direction":"left"}, 500);
+							});
+						});
+					}); initReq.fail(function(){ _appHandler.show_error_message(404, ""); });
+				}
+			});
+			
+		}); hospital.fail(function(){ _appHandler.show_error_message(404, ""); });
+		
+		
+	});
+	</script>
+</head>
+<body>
+
+	<div id='welcome-pane-container' align='center'>
+		<img src='img/icon-large.PNG' title='MSU-Iligan Institute of Technology - College of Nursing' />
+		<div style='padding-top:2%'>
+			<h2>Signus Vitalis: <small>A Vital Signs Information System</small></h2>
+			<h4>...</h4>
+		</div>
+		<div id='welcome-pane-status'>Starting Application...</div>
+	</div>
+	
+	<div id='application-pane-container' class='container'>
+		
+		<div id='app-container' class='row span12'>
+			<div id='app-header'>
+				<h1>Vital Signs Information System</h1>
+				<h4>...</h4>
+			</div>
+
+			<div id='main-menu' class='row span12'>
+				<ul>
+					<li id='dashboard' class='active'> 
+						Dashboard
+					</li>
+					<li id='patient'> Patient List </li>
+					<li id='personnel'> Personnel </li>
+					<li id='settings'> About </li>
+				</ul>
+			</div>
+			<div id='container' class='row span12' >
+				<!--  Here starts the UI -->
+				<!--  Patient List UI -->
+				<div style='margin-left:-2%'>
+					
+				</div>
+
+			</div>
+		</div>
+
+	</div>
+	
+<!-- Notification Panel. This is an app based notification. Not rely on dashboard -->
+<script>
+$(function(){
+	_notificationHandler.__init__(); //Initialize the notification :)
+	
+	$('#notification-content, #notification-form-back').hide(0);
+	$('#notification-form-cancel').click(function(){
+		$('#notification-form').modal('hide');
+		
+		//Get back the table dayun :)
+		
+	});
+	
+	$('#notification-form-back').click(function(){
+		$(this).hide('fade', 500);
+		$('#notification-content').hide('slide', 500, function(){
+			$('#notification-table').show('slide', 500);
+		});
+	});
+	
+	$(".notification-container-item").click(function(){
+		var kini = $(this);
+	
+		$('#notification-table').hide('slide', 500, function(){
+			//Show the back button
+			$('#notification-form-back').show('fade', 500);
+			//Show the chuchu and content... :)
+			$('#notification-content').show('slide', 500, function(){
+				
+				
+				//Remove the unread marker after load
+				kini.removeClass('unread-notification'); _notificationHandler.minusOne();
+			});
+		});
+	});
+});
+</script>
+<div id='notification-form' class='modal hide fade' data-keyboard='false' data-backdrop='static'>
+	<div class='modal-header'>
+		<h3 id='alert-modal-box-header' style='color:#555'> Notification Messages</h3>
+	</div>
+	<div class='modal-body'>
+		<div id='notification-table'>
+			<div class='notification-container-item unread-notification'>
+				<div class='notification-container-item-date'>
+					2012-12-21 02:21:22
+				</div>
+				patient chuchu has recorded chuchu...
+			</div>
+			<div class='notification-container-item'>
+				<div class='notification-container-item-date'>
+					2012-12-21 02:21:22
+				</div>
+				patient chuchu has recorded chuchu...
+			</div>
+		</div>
+		<div id='notification-content'>
+			Loading notification message...
+		</div>
+	</div>
+	<div class='modal-footer'>
+		<button id='notification-form-back' class='alternate'>Back to Notifications</button>
+		<button id='notification-form-cancel' class='alternate'>Close</button>
+	</div>
+</div>
+</body>
+</html>

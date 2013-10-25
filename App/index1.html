@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Signus Vitalis - Vital Signs Information System </title>
+
+	<link rel='stylesheet' href='css/bootstrap.css' type='text/css' />
+	<script type='text/javascript' src='js/jquery.js'></script>
+	<script type='text/javascript' src='js/jquery-ui-1.10.2.custom.js'></script>
+	<script type='text/javascript' src='js/bootstrap.js'></script>
+	<link rel="stylesheet" type="text/css" href="graph/jquery.jqplot.css" />
+	<script language="javascript" type="text/javascript" src="graph/jquery.jqplot.min.js"></script>
+	<script type="text/javascript" src="graph/plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script type="text/javascript" src="graph/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="css/jquery.jscrollpane.css" />
+	<script type='text/javascript' src='js/jquery.mousewheel.js'></script>
+	<script type='text/javascript' src='js/mwheelIntent.js'></script>
+	<script type='text/javascript' src='js/jquery.jscrollpane.min.js'></script>
+
+	<link rel='stylesheet' href='css/styles.css' type='text/css' />
+
+	<script>
+
+	var _appHandler = {
+
+		welcome_pane_handler: function(pane_object, message_object){
+			this.pane = pane_object;
+			this.message = message_object;
+			this.update_message = function(msg){
+				this.message.html(msg);
+			}
+			this.animate_out_to = function(successor_obj){
+				//This assumes that the successor_obj has DOM objects inside na.
+				var current_obj = this.pane;
+				current_obj.hide('fade', 800, function(){
+					successor_obj.show('fade', 800);
+					current_obj.html("");
+				}); //To destroy the whole welcome pane. Para NO LAGS in the future :)
+			}
+
+		},
+		alert_box_handler: function(obj, head, body, btn){
+			// This is for the Bootstrap alert box...
+			// Parameters: The alert object itself...
+
+			this.modal = obj; this.headerTxt = head; this.bodyTxt = body; this.btn = btn;
+			this.update_alert_content = function(header, body, action){
+				this.headerTxt.html(header); this.bodyTxt.html(body);
+				this.btn.attr('data-action', action);
+			}
+			this.show = function(){ var modalBox = this.modal; modalBox.modal('show'); }
+			this.hide = function(){ var modalBox = this.modal; modalBox.modal('hide'); }
+
+			//Override... :)
+			var parent = this;
+			this.btn.click(function(){
+				parent.hide(); location.reload();
+			});
+
+		},
+		home_page_handler: function(obj){
+
+			this.home_page = obj; //This will be the main object
+		}
+
+	}
+
+	var _address = {
+		server: "http://192.168.1.2/vsrs/Server/",
+
+		full_address: function(location){ return this.server+location; }
+	}
+
+	var _clientData = {
+		//
+		wardID: sessionStorage.wardID,
+		update_ward_id: function(id){ sessionStorage.wardID = id; wardID = id;}
+	}
+
+	var _notificationHandler = {
+
+		buttonOpen:$('#notification-button'),
+		buttonClose:$('#notification-close')
+
+	}
+
+	$(function(){
+
+		/*
+		* Actions for Splash Screen...
+		*/ 
+
+		//Hide all hideable objects
+		$('#dashboard-pane').hide(0);
+
+		//Initialize...
+		var welcome_pane = new _appHandler.welcome_pane_handler($('#welcome-pane'), $('#welcome-status'));
+		var alert_modal  = new _appHandler.alert_box_handler($('#alert-modal-box'), $('#alert-modal-box-header'), $('#alert-modal-box-content'), $('#alert-modal-box-btn'));
+
+		//Check IP address :)
+		welcome_pane.update_message('Verifying machine IP address...');
+		var ipVerifyReq = $.ajax({ url: _address.full_address('session.php?w') });
+		ipVerifyReq.success(function(data){
+			var ipData = JSON && JSON.parse(data) || $.parseJSON(data);
+			
+			if (ipData.wardID == ""){
+				welcome_pane.update_message('Verifying machine IP address... Failed.');
+
+				var msg = "<p>Please consult your administrator to check whether your unit has the correct IP address, or this unit might have a conflict in IP address assignment to other computers. Press OK to refresh the page.</p>";
+				alert_modal.update_alert_content("Sorry but we do not know you...", msg, "refresh");
+				alert_modal.show();
+			} else {
+				_clientData.update_ward_id(ipData.wardID);
+
+				welcome_pane.update_message('Verifying machine IP address... IP Address verified.');
+				setTimeout(function(){
+					welcome_pane.update_message('Getting application data.');
+
+					//Loading ward information
+					var wardInfo = $.ajax({ 
+						url: _address.full_address('info.php?p=ward'), data:_clientData.wardID });
+
+					wardInfo.success(function(data){
+						var ward_data = JSON && JSON.parse(data) || $.parseJSON(data);
+						welcome_pane.update_message('Loading application');
+						//Get main page UI elements...
+
+						setTimeout(function(){
+							welcome_pane.animate_out_to($('#dashboard-pane'));
+						}, 1000);
+					});
+
+
+				}, 300);
+			}
+
+		});
+
+		//This is for main menu hover actions...
+		$('#records-active-shader, #personnel-active-shader').hide(0);
+		$('#main-menu li').click(function(){
+			var id = $(this).attr('id');
+
+			if ($(this).attr('class') != "active"){
+				//Get previous item...
+				var previous = null;
+				$('#main-menu li').each(function(){
+					if ($(this).attr('class') == "active"){
+						previous = $(this).attr('id');
+						$(this).removeClass('active');
+					}
+				});
+
+				//Remove the item and update...
+				$('#'+previous+"-active-shader").hide('fade', 500); 
+				$('#'+id+"-active-shader").show('fade', 500); $(this).addClass('active');
+
+				//Update page...
+				$('#dashboard-container').hide('drop', {direction:"right"}, 500, function(){
+					//Grab items from SERVER
+					var location = _address.server;
+					if (id == "records"){
+						location = _address.full_address('page.php?p=stat');
+					} else if (id == "personnel"){
+						location = _address.full_address('page.php?p=pers');
+					}
+
+					var content = $.ajax({ url:location });
+					content.success(function(data){
+						$('#dashboard-container').html(data);
+						$('#dashboard-container').show('drop', {direction:"right"}, 500);
+					});
+				});
+
+			}
+			
+		});
+
+	});
+
+	</script>
+
+</head>
+<body>
+	<!-- Here starts the modal -->
+	<div id='alert-modal-box' class='modal hide fade' data-keyboard='false' data-backdrop='static'>
+		<div class='modal-header'>
+			<h3 id='alert-modal-box-header'>Modal header</h3>
+		</div>
+		<div id='alert-modal-box-content' class="modal-body">
+		    <p>One fine body…</p>
+		</div>
+		<div class="modal-footer">
+		    <a href="#" id='alert-modal-box-btn' data-action='' class="btn btn-primary">OK</a>
+		</div>
+	</div>
+	<!-- It ends here -->
+
+	</div>
+	<div id='welcome-pane'>
+		<div id='title-pane-container' align='center'>
+			<h1> Signus Vitalis </h1>
+			<h3> Vital Signs Information System </h3>
+			<img id='logo-large-holder' src='img/icon-large.PNG' />
+		</div>
+		<div id='welcome-pane-status-container' align='center'>
+			<div id='welcome-pane-status-holder'>
+				<img src='img/load.gif' /><br><br>
+				<span id='welcome-status'>Starting application</span>
+			</div>
+		</div>
+	</div>
+	<div id='dashboard-pane'>
+		<div id='topbar' class='row-fluid'>
+			<div id='main-title' class='pull-left'>
+				<span id='app-title'><b>Signus</b>Vitalis</span> |
+				Vital Signs Information Systems - Mission Control
+			</div>
+			<div id='hospital-name' class='pull-right'>
+				G. Lluch Memorial Hospital, Iligan City
+			</div>
+		</div>
+
+		<div id='midbar-info-container' class='row-fluid'>
+
+			<div id='ward-info' class='span9'>
+				<!-- Ward Info Holder -->
+				<h2>Intensive Care Unit</h2>
+				<div id='ward-info-text'>
+					Vitals Activity Recieved: 0 | Current Shift: 7AM-3PM | Nurses Active: 3
+				</div>
+			</div>
+		<!--
+			<div id='notification-info' class='span9'>
+
+			</div> 
+			<div id='topbar-menu-container' class='span3'>
+				<ul>
+					<li>
+						<img src='img/dashboard.PNG' />
+						<div class='active'>&nbsp</div>
+					</li>
+					<li>
+						<img src='img/dashboard.PNG' />
+						<div class='active'>&nbsp</div>
+					</li>
+				</li>
+			</div> -->
+		</div> 
+
+		<div id='body-container' class='row-fluid'>
+			<div id='main-menu-container' class='span3'>
+				<!-- Icon Holder -->
+				<div style='height:5px;'></div>
+				<ul id='main-menu'>
+					<li id='dashboard' class='active'>
+						<div id='dashboard-active-shader' class='active-shader'>&nbsp</div>
+							<div style='height:30px;width:30px;float:left;margin-top:25px;margin-right:10px'>
+								<img src='img/dashboard.PNG' />
+							</div>
+						<div>
+							<h3>Dashboard</h3>
+							Activity Log Viewer
+						</div>
+					</li>
+					<li id='records'>
+					 	<div id='records-active-shader' class='active-shader'>&nbsp</div>
+							<div style='height:30px;width:30px;float:left;margin-top:25px;margin-right:10px'>
+								<img src='img/stats.PNG' />
+							</div>
+						<div>
+							<h3>Statistics</h3>
+							Patient Profile, Search
+						</div>
+					</li>
+					<li id='personnel'>
+						<div id='personnel-active-shader' class='active-shader'>&nbsp</div>
+							<div style='height:30px;width:30px;float:left;margin-top:25px;margin-right:10px'>
+								<img src='img/personnel.PNG' />
+							</div>
+						<div>
+							<h3>Personnel</h3>
+							Nurse Management
+						</div>
+					</li>
+				</ul>
+			</div>
+			<div id='body' align='left'>
+				<div id='dashboard-container' class='body-object'>
+					<h3>Activity Feed</h3>
+					<div>
+
+					</div>
+				</div>
+			</div>
+		</div> 
+	</div>
+</body>
+</html>
